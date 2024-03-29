@@ -9,9 +9,9 @@ if [[ -z "$1" ]]; then
   exit 1
 fi
 
-DEST_SUBREPO=$1/werf
+DEST_SUBREPO=$1
 
-export WERF_REPO=ghcr.io/werf/werf-storage
+#export WERF_REPO=ghcr.io/werf/werf-storage
 
 # Extra labels for artifacthub
 export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
