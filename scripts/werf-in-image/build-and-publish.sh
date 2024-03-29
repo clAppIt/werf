@@ -42,7 +42,7 @@ for group in "1.2"; do
       werf export --tag "$DEST_SUBREPO/werf:$group-$channel-$distro" "$group-$channel-$distro"
     done
 
-    for distro in "ubuntu" "ubuntu20"; do
+    for distro in "ubuntu"; do
       werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:$group-$channel-$distro" "argocd-cmp-sidecar-$group-$channel-$distro"
     done
   done

@@ -62,7 +62,7 @@ import:
 {{- end }}
 
 
-{{- range $_, $distro := list "ubuntu" "ubuntu20" }}
+{{- range $_, $distro := list "ubuntu" }}
 ---
 image: "argocd-cmp-sidecar-{{ $distro }}"
 dockerfile: "./argocd-cmp-sidecar-{{ $distro }}.Dockerfile"
