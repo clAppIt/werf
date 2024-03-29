@@ -30,7 +30,7 @@ for group in "1.2"; do
   werf export --tag "$DEST_SUBREPO/werf:$group" "$group-stable-alpine"
   werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:$group" "argocd-cmp-sidecar-$group-stable-ubuntu"
 
-  for distro in "alpine" "ubuntu" "centos" "fedora"; do
+  for distro in "alpine" "ubuntu" "ubuntu20" "centos" "fedora"; do
     werf export --tag "$DEST_SUBREPO/werf:$group-$distro" "$group-stable-$distro"
   done
 
@@ -38,11 +38,11 @@ for group in "1.2"; do
     werf export --tag "$DEST_SUBREPO/werf:$group-$channel" "$group-$channel-alpine"
     werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:$group-$channel" "argocd-cmp-sidecar-$group-$channel-ubuntu"
 
-    for distro in "alpine" "ubuntu" "centos" "fedora"; do
+    for distro in "alpine" "ubuntu" "ubuntu20" "centos" "fedora"; do
       werf export --tag "$DEST_SUBREPO/werf:$group-$channel-$distro" "$group-$channel-$distro"
     done
 
-    for distro in "ubuntu"; do
+    for distro in "ubuntu" "ubuntu20"; do
       werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:$group-$channel-$distro" "argocd-cmp-sidecar-$group-$channel-$distro"
     done
   done

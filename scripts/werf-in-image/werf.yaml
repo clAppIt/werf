@@ -42,7 +42,7 @@ git:
   stageDependencies:
     install: [""]
 
-{{- range $_, $distro := list "alpine" "ubuntu" "centos" "fedora" }}
+{{- range $_, $distro := list "alpine" "ubuntu" "ubuntu20" "centos" "fedora" }}
 ---
 image: "{{ $distro }}"
 dockerfile: "./{{ $distro }}.Dockerfile"
@@ -62,7 +62,7 @@ import:
 {{- end }}
 
 
-{{- range $_, $distro := list "ubuntu" }}
+{{- range $_, $distro := list "ubuntu" "ubuntu20" }}
 ---
 image: "argocd-cmp-sidecar-{{ $distro }}"
 dockerfile: "./argocd-cmp-sidecar-{{ $distro }}.Dockerfile"
