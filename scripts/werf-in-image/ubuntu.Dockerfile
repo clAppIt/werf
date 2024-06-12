@@ -31,8 +31,8 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN useradd -m build
-USER build:build
+# RUN useradd -m build
+# USER build:build
 RUN mkdir -p /home/build/.local/share/containers
 VOLUME /home/build/.local/share/containers
 
