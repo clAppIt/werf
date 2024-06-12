@@ -7,7 +7,7 @@ permalink: usage/build/process.html
 
 ## Tagging images
 
-<!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#stage-naming -->
+<!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#stage-naming -->
 
 The tagging of werf images is performed automatically as part of the build process. werf uses an optimal tagging scheme based on the contents of the image, thus preventing unnecessary rebuilds and application wait times during deployment.
 
@@ -85,7 +85,7 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 ## Layer-by-layer image caching
 
-<!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#storage -->
+<!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#storage -->
 
 Layer-by-layer image caching is essential part of the werf build process. werf saves and reuses the build cache in the container registry and synchronizes parallel builders.
 
@@ -154,7 +154,7 @@ Stapel images are cached layer-by-layer in the container registry by default and
 
 ## Parallelism and image assembly order
 
-<!-- reference: https://werf.io/documentation/v1.2/internals/build_process.html#parallel-build -->
+<!-- reference: https://werf.io/docs/v2/internals/build_process.html#parallel-build -->
 
 All the images described in `werf.yaml` are built in parallel on the same build host. If there are dependencies between the images, the build is split into stages, with each stage containing a set of independent images that can be built in parallel.
 
@@ -224,6 +224,24 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Using mirrors for docker.io
+
+You can set up mirrors for the default `docker.io` container registry.
+
+If you are using Docker backend for building images, add `registry-mirrors` to `/etc/docker/daemon.json` file:
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+Then restart Docker daemon and logout from `docker.io` with `werf cr logout`.
+
+If you are using Buildah backend, then instead of editing `daemon.json` you should add `--container-registry-mirror` to werf commands, e.g.:
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
+
 ## Using container registry
 
 In werf, the container registry is used not only to store the final images, but also to store the build cache and service data required for werf (e.g., metadata for cleaning the container registry based on Git history). The container registry is set by the `--repo` parameter:
@@ -267,7 +285,7 @@ You can clean up a caching repository by deleting it entirely without any risks.
 
 ## Synchronizing builders
 
-<!-- reference https://werf.io/documentation/v1.2/advanced/synchronization.html -->
+<!-- reference https://werf.io/docs/v2/advanced/synchronization.html -->
 
 To ensure consistency among parallel builders and to guarantee the reproducibility of images and intermediate layers, werf handles the synchronization of the builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
 
@@ -339,7 +357,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Multi-platform builds
 
-Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) section for more information on how to configure the host system to do cross-platform builds.
+Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]("https://werf.io/getting_started/") section for more information on how to configure the host system to do cross-platform builds.
 
 The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 

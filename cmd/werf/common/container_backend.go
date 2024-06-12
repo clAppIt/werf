@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func ContainerBackendProcessStartupHook() (bool, error) {
@@ -93,7 +93,7 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 	return containerBackend
 }
 
-func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (container_backend.ContainerBackend, context.Context, error) {
+func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -109,10 +109,11 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 
 		b, err := buildah.NewBuildah(*buildahMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
-				TmpDir:        filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
-				Insecure:      insecure,
-				Isolation:     buildahIsolation,
-				StorageDriver: storageDriver,
+				TmpDir:          filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
+				Insecure:        insecure,
+				Isolation:       buildahIsolation,
+				StorageDriver:   storageDriver,
+				RegistryMirrors: registryMirrors,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})

@@ -17,10 +17,10 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/slug"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type WerfConfigOptions struct {
@@ -109,7 +109,6 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			"###           WARNING! Project name cannot be changed later without rebuilding and redeploying your application!           ###\n" +
 			"###       Project name should be unique within group of projects that shares build hosts and deployed into the same        ###\n" +
 			"###                    Kubernetes clusters (i.e. unique across all groups within the same gitlab).                         ###\n" +
-			"###              Read more about meta config section: https://werf.io/documentation/reference/werf_yaml.html               ###\n" +
 			"##############################################################################################################################"
 
 		return "", nil, fmt.Errorf(format, defaultProjectName)

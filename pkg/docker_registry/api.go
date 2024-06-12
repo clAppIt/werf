@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -23,24 +24,28 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/docker_registry/container_registry_extensions"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/docker_registry/container_registry_extensions"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 type api struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
+
+	httpTransport http.RoundTripper
 }
 
 type apiOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
+	RegistryMirrors       []string
 }
 
 func newAPI(options apiOptions) *api {
 	return &api{
 		InsecureRegistry:      options.InsecureRegistry,
 		SkipTlsVerifyRegistry: options.SkipTlsVerifyRegistry,
+		httpTransport:         newHttpTransport(options.SkipTlsVerifyRegistry),
 	}
 }
 
@@ -501,7 +506,7 @@ func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
 	return []remote.Option{
 		remote.WithContext(ctx),
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
+		remote.WithTransport(api.httpTransport),
 	}
 }
 
@@ -524,7 +529,7 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	// res[3] digest
 	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
 	if len(res) != 4 {
-		panic(fmt.Sprintf("unexpected regexp find submatch result %v for reference %q (%d)", res, reference, len(res)))
+		return referenceParts{}, fmt.Errorf("unexpected reference %q", reference)
 	}
 
 	referenceParts := referenceParts{}
@@ -600,7 +605,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			ref, i,
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
 			remote.WithProgress(c),
-			remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
+			remote.WithTransport(api.httpTransport),
 			remote.WithContext(ctx),
 		)
 	case v1.ImageIndex:
@@ -608,7 +613,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			ref, i,
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
 			remote.WithProgress(c),
-			remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
+			remote.WithTransport(api.httpTransport),
 			remote.WithContext(ctx),
 		)
 	default:

@@ -39,6 +39,8 @@ werf bundle render [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
   -b, --bundle-dir=''
             Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
@@ -56,8 +58,8 @@ werf bundle render [options]
       --include-crds=true
             Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
+            (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-version=''
@@ -89,20 +91,20 @@ werf bundle render [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace=''
-            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
-            deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+            Use specified Kubernetes namespace (default $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --output=''
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
       --release=''
-            Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
-            deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+            Use specified Helm release name (default $WERF_RELEASE)
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -119,21 +121,10 @@ werf bundle render [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --repo-selectel-account=''
-            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
-      --repo-selectel-password=''
-            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
-      --repo-selectel-username=''
-            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
-      --repo-selectel-vpc=''
-            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
-      --repo-selectel-vpc-id=''
-            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
       --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
-            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
+            Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml,       
+            $WERF_SECRET_VALUES_DB=secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
@@ -163,8 +154,8 @@ werf bundle render [options]
             Validate your manifests against the Kubernetes cluster you are currently pointing at    
             (default $WERF_VALIDATE)
       --values=[]
-            Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,      
-            $WERF_VALUES_2=.helm/values_2.yaml)
+            Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml,                         
+            $WERF_VALUES_2=values_2.yaml)
 ```
 

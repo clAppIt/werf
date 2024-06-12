@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"mvdan.cc/xurls"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/cmd/werf/common/templates"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/cmd/werf/common/templates"
 )
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
@@ -89,7 +89,7 @@ func replaceLinks(s string) string {
 	links := xurls.Relaxed.FindAllString(s, -1)
 	for _, link := range links {
 		linkText := link
-		for _, prefix := range []string{"werf.io/documentation", "https://werf.io/documentation"} {
+		for _, prefix := range []string{"werf.io/docs", "https://werf.io/docs"} {
 			if strings.HasPrefix(link, prefix) {
 				link = strings.TrimPrefix(link, prefix)
 				link = fmt.Sprintf("{{ \"%s\" | true_relative_url }}", link)

@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/config/deploy_params"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/config/deploy_params"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var getReleaseCmdData common.CmdData
@@ -39,7 +39,7 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
 	common.SetupGiterminismConfigPath(&getReleaseCmdData, cmd)
-	common.SetupNamespace(&getReleaseCmdData, cmd)
+	common.SetupNamespace(&getReleaseCmdData, cmd, true)
 	common.SetupEnvironment(&getReleaseCmdData, cmd)
 
 	common.SetupGiterminismOptions(&getReleaseCmdData, cmd)

@@ -38,9 +38,9 @@ jobs:
       matrix:
         k8s-version:
           - major: 1
-            minor: 23
+            minor: 27
           - major: 1
-            minor: 25
+            minor: 29
     runs-on: ubuntu-latest-4-cores
     timeout-minutes: ${{ inputs.timeout }}
     steps:
@@ -68,7 +68,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Task
-        uses: arduino/setup-task@v1
+        uses: arduino/setup-task@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 

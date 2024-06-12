@@ -30,7 +30,7 @@ for group in "1.2"; do
   done
 
   for channel in "stable"; do
-  
+
     for distro in "ubuntu"; do
       werf export --tag "$DEST_SUBREPO/werf1:$group-$channel-$distro" "$group-$channel-$distro"
     done

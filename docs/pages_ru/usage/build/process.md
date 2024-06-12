@@ -7,7 +7,7 @@ permalink: usage/build/process.html
 
 ## Тегирование образов
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/stages_and_storage.html#stage-naming -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/internals/stages_and_storage.html#stage-naming -->
 
 Тегирование образов werf выполняется автоматически в рамках сборочного процесса. Используется оптимальная схема тегирования, основанная на содержимом образа, которая предотвращает лишние пересборки и время простоя приложения при выкате.
 
@@ -152,7 +152,7 @@ staged: true
 
 ## Параллельность и порядок сборки образов
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/build_process.html#parallel-build -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/internals/build_process.html#parallel-build -->
 
 Все образы, описанные в `werf.yaml`, собираются параллельно на одном сборочном хосте. При наличии зависимостей между образами сборка разбивается на этапы, где каждый этап содержит набор независимых образов и может собираться параллельно.
 
@@ -222,6 +222,24 @@ target: assets
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Использование зеркал для docker.io
+
+Вы можете использовать зеркала для используемого по умолчанию `docker.io` Container Registry.
+
+Если вы используете Docker для сборки, то добавьте `registry-mirrors` в `/etc/docker/daemon.json` файл:
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+После чего перезагрузите Docker и разлогиньтесь из `docker.io` с помощью `werf cr logout`.
+
+Если же вы используете Buildah для сборки, то вместо правки `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд, например:
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
+
 ## Использование container registry
 
 При использовании werf container registry используется не только для хранения конечных образов, но также для сборочного кэша и служебных данных, необходимых для работы werf (например, метаданные для очистки container registry на основе истории Git). Репозиторий container registry задаётся параметром `--repo`:
@@ -265,7 +283,7 @@ werf build --repo registry.mycompany.org/project --cache-repo localhost:5000/pro
 
 ## Синхронизация сборщиков
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/synchronization.html -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/advanced/synchronization.html -->
 
 Для обеспечения согласованности в работе параллельных сборщиков, а также гарантии воспроизводимости образов и промежуточных слоёв, werf берёт на себя ответственность за синхронизацию сборщиков. По умолчанию используется публичный сервис синхронизации по адресу [https://synchronization.werf.io/](https://synchronization.werf.io/) и от пользователя ничего дополнительно не требуется.
 
@@ -337,7 +355,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Мультиплатформенная сборка
 
-Мультиплатформенная сборка использует механизмы кроссплатформенного исполнения инструкций, предоставляемые [ядром Linux](https://en.wikipedia.org/wiki/Binfmt_misc) и эмулятором QEMU. [Перечень поддерживаемых архитектур](https://www.qemu.org/docs/master/about/emulation.html). Подготовка хост-системы для мультиплатформенной сборки рассмотрена [в разделе установки werf]({{ "index.html" | true_relative_url }})
+Мультиплатформенная сборка использует механизмы кроссплатформенного исполнения инструкций, предоставляемые [ядром Linux](https://en.wikipedia.org/wiki/Binfmt_misc) и эмулятором QEMU. [Перечень поддерживаемых архитектур](https://www.qemu.org/docs/master/about/emulation.html). Подготовка хост-системы для мультиплатформенной сборки рассмотрена [в разделе установки werf](https://ru.werf.io/getting_started/)
 
 Поддержка мультиплатформенной сборки для разных вариантов синтаксиса сборки, режимов сборки и используемого бекенда:
 

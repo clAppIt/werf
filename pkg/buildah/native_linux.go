@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"text/template"
 	"time"
 
 	"github.com/containerd/containerd/platforms"
@@ -41,8 +42,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/errgo.v2/fmt/errors"
 
-	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const (
@@ -121,8 +122,13 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
+	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate registries config: %w", err)
+	}
+
 	b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
-	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(DefaultRegistriesConfig), os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(registriesConfig), os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to write file %q: %w", b.RegistriesConfigPath, err)
 	}
 
@@ -208,6 +214,40 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	}
 
 	return systemContext, nil
+}
+
+func generateRegistriesConfig(mirrors []string) (string, error) {
+	var mrs []string
+	for _, mirror := range mirrors {
+		mirror, _ = strings.CutPrefix(mirror, "https://")
+		mirror, _ = strings.CutPrefix(mirror, "http://")
+		mrs = append(mrs, mirror)
+	}
+
+	tpl := `
+unqualified-search-registries = ["docker.io"]
+
+[[registry]]
+location = "docker.io"
+
+{{ range . -}}
+[[registry.mirror]]
+location = "{{ . }}"
+
+{{ end -}}
+`
+	tmpl, err := template.New("tmp").Parse(tpl)
+	if err != nil {
+		return "", err
+	}
+
+	var result bytes.Buffer
+	err = tmpl.Execute(&result, mrs)
+	if err != nil {
+		return "", err
+	}
+
+	return result.String(), nil
 }
 
 func (b *NativeBuildah) getRuntime(systemContext *imgtypes.SystemContext) (*libimage.Runtime, error) {

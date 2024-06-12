@@ -53,6 +53,8 @@ werf export [IMAGE_NAME...] [options]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -80,7 +82,7 @@ werf export [IMAGE_NAME...] [options]
       --final-repo-container-registry=''
             Choose final-repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
       --final-repo-docker-hub-password=''
@@ -97,16 +99,6 @@ werf export [IMAGE_NAME...] [options]
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=''
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --final-repo-selectel-account=''
-            final-repo Selectel account (default $WERF_FINAL_REPO_SELECTEL_ACCOUNT)
-      --final-repo-selectel-password=''
-            final-repo Selectel password (default $WERF_FINAL_REPO_SELECTEL_PASSWORD)
-      --final-repo-selectel-username=''
-            final-repo Selectel username (default $WERF_FINAL_REPO_SELECTEL_USERNAME)
-      --final-repo-selectel-vpc=''
-            final-repo Selectel VPC (default $WERF_FINAL_REPO_SELECTEL_VPC)
-      --final-repo-selectel-vpc-id=''
-            final-repo Selectel VPC ID (default $WERF_FINAL_REPO_SELECTEL_VPC_ID)
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
@@ -120,6 +112,27 @@ werf export [IMAGE_NAME...] [options]
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --introspect-before-error=false
+            Introspect failed stage in the clean state, before running all assembly instructions of 
+            the stage
+      --introspect-error=false
+            Introspect failed stage in the state, right after running failed assembly instruction
+      --introspect-stage=[]
+            Introspect a specific stage. The option can be used multiple times to introspect        
+            several stages.
+            
+            There are the following formats to use:
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
+            artifact IMAGE_NAME
+            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
+            name STAGE_NAME
+            
+            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
+            image specified with ~.
+            STAGE_NAME should be one of the following: from, beforeInstall,                         
+            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
+            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
+            dockerInstructions, dockerfile
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -155,9 +168,12 @@ werf export [IMAGE_NAME...] [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
+  -p, --parallel=true
+            Run in parallel (default $WERF_PARALLEL or true)
+      --parallel-tasks-limit=5
+            Parallel tasks limit, set -1 to remove the limitation (default                          
+            $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
@@ -166,7 +182,7 @@ werf export [IMAGE_NAME...] [options]
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -183,16 +199,6 @@ werf export [IMAGE_NAME...] [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --repo-selectel-account=''
-            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
-      --repo-selectel-password=''
-            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
-      --repo-selectel-username=''
-            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
-      --repo-selectel-vpc=''
-            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
-      --repo-selectel-vpc-id=''
-            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
   -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
@@ -209,8 +215,7 @@ werf export [IMAGE_NAME...] [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             

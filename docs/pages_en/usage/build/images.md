@@ -3,7 +3,7 @@ title: Images and dependencies
 permalink: usage/build/images.html
 ---
 
-<!-- reference: https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
+<!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
 
 ## Adding images
 
@@ -29,7 +29,7 @@ Next, for each image in `werf.yaml`, you have to define the build instructions u
 
 ### Dockerfile
 
-<!-- reference: https://werf.io/documentation/v1.2/reference/werf_yaml.html#dockerfile-builder -->
+<!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#dockerfile-builder -->
 
 #### Writing Dockerfile instructions
 
@@ -409,7 +409,7 @@ During the build, werf will automatically insert the appropriate names and ident
 
 werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).
 
-> **NOTE:** Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds, and [Build process]({{ "/usage/build/process.html" | true_relative_url }}) for more information on multi-platform support for different syntaxes and backends.
+> **NOTE:** Refer to the [Installation]("https://werf.io/getting_started/") for more information about preparing host system for cross-platform builds, and [Build process]({{ "/usage/build/process.html" | true_relative_url }}) for more information on multi-platform support for different syntaxes and backends.
 
 ### Building for single target platform
 

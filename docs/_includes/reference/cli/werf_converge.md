@@ -9,7 +9,6 @@ The result of converge command is an application deployed into Kubernetes for cu
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/environments.html]({{ "/usage/deploy/environments.html" | true_relative_url }})
 
 
 {{ header }} Syntax
@@ -100,6 +99,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --deploy-graph-path=''
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -146,7 +147,7 @@ werf converge --repo registry.mydomain.com/web --env production
       --final-repo-container-registry=''
             Choose final-repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
       --final-repo-docker-hub-password=''
@@ -163,16 +164,6 @@ werf converge --repo registry.mydomain.com/web --env production
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=''
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --final-repo-selectel-account=''
-            final-repo Selectel account (default $WERF_FINAL_REPO_SELECTEL_ACCOUNT)
-      --final-repo-selectel-password=''
-            final-repo Selectel password (default $WERF_FINAL_REPO_SELECTEL_PASSWORD)
-      --final-repo-selectel-username=''
-            final-repo Selectel username (default $WERF_FINAL_REPO_SELECTEL_USERNAME)
-      --final-repo-selectel-vpc=''
-            final-repo Selectel VPC (default $WERF_FINAL_REPO_SELECTEL_VPC)
-      --final-repo-selectel-vpc-id=''
-            final-repo Selectel VPC ID (default $WERF_FINAL_REPO_SELECTEL_VPC_ID)
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
@@ -252,9 +243,7 @@ werf converge --repo registry.mydomain.com/web --env production
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
@@ -278,7 +267,7 @@ werf converge --repo registry.mydomain.com/web --env production
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -295,42 +284,6 @@ werf converge --repo registry.mydomain.com/web --env production
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --repo-selectel-account=''
-            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
-      --repo-selectel-password=''
-            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
-      --repo-selectel-username=''
-            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
-      --repo-selectel-vpc=''
-            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
-      --repo-selectel-vpc-id=''
-            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
-      --report-format=''
-            DEPRECATED: use --save-build-report with optional --build-report-path.
-            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default) json:
-            	{
-            	  "Images": {
-            		"<WERF_IMAGE_NAME>": {
-            			"WerfImageName": "<WERF_IMAGE_NAME>",
-            			"DockerRepo": "<REPO>",
-            			"DockerTag": "<TAG>"
-            			"DockerImageName": "<REPO>:<TAG>",
-            			"DockerImageID": "<SHA256>",
-            			"DockerImageDigest": "<SHA256>",
-            		},
-            		...
-            	  }
-            	}
-            envfile:
-            	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-            	...
-            <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
-            following rules:
-            - all characters are uppercase (app -> APP);
-            - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
-      --report-path=''
-            DEPRECATED: use --save-build-report with optional --build-report-path.
-            Report save path ($WERF_REPORT_PATH by default)
   -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
@@ -350,9 +303,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
       --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
@@ -380,8 +332,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
@@ -409,8 +360,8 @@ werf converge --repo registry.mydomain.com/web --env production
             For cleaning custom tags and associated content-based tag are treated as one.
             Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")
       --values=[]
-            Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,      
+            Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
             $WERF_VALUES_2=.helm/values_2.yaml)
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      

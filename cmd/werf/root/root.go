@@ -8,47 +8,44 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/cmd/werf/build"
-	bundle_apply "github.com/werf/werf/cmd/werf/bundle/apply"
-	bundle_copy "github.com/werf/werf/cmd/werf/bundle/copy"
-	bundle_download "github.com/werf/werf/cmd/werf/bundle/download"
-	bundle_export "github.com/werf/werf/cmd/werf/bundle/export"
-	bundle_publish "github.com/werf/werf/cmd/werf/bundle/publish"
-	bundle_render "github.com/werf/werf/cmd/werf/bundle/render"
-	"github.com/werf/werf/cmd/werf/ci_env"
-	"github.com/werf/werf/cmd/werf/cleanup"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/cmd/werf/common/templates"
-	"github.com/werf/werf/cmd/werf/completion"
-	"github.com/werf/werf/cmd/werf/compose"
-	config_graph "github.com/werf/werf/cmd/werf/config/graph"
-	config_list "github.com/werf/werf/cmd/werf/config/list"
-	config_render "github.com/werf/werf/cmd/werf/config/render"
-	"github.com/werf/werf/cmd/werf/converge"
-	cr_login "github.com/werf/werf/cmd/werf/cr/login"
-	cr_logout "github.com/werf/werf/cmd/werf/cr/logout"
-	"github.com/werf/werf/cmd/werf/dismiss"
-	"github.com/werf/werf/cmd/werf/docs"
-	kubectl2 "github.com/werf/werf/cmd/werf/docs/replacers/kubectl"
-	"github.com/werf/werf/cmd/werf/export"
-	"github.com/werf/werf/cmd/werf/helm"
-	host_cleanup "github.com/werf/werf/cmd/werf/host/cleanup"
-	host_purge "github.com/werf/werf/cmd/werf/host/purge"
-	"github.com/werf/werf/cmd/werf/kube_run"
-	"github.com/werf/werf/cmd/werf/kubectl"
-	managed_images_add "github.com/werf/werf/cmd/werf/managed_images/add"
-	managed_images_ls "github.com/werf/werf/cmd/werf/managed_images/ls"
-	managed_images_rm "github.com/werf/werf/cmd/werf/managed_images/rm"
-	"github.com/werf/werf/cmd/werf/plan"
-	"github.com/werf/werf/cmd/werf/purge"
-	"github.com/werf/werf/cmd/werf/render"
-	"github.com/werf/werf/cmd/werf/run"
-	"github.com/werf/werf/cmd/werf/slugify"
-	stage_image "github.com/werf/werf/cmd/werf/stage/image"
-	"github.com/werf/werf/cmd/werf/synchronization"
-	"github.com/werf/werf/cmd/werf/version"
-	dhelm "github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/telemetry"
+	"github.com/werf/werf/v2/cmd/werf/build"
+	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
+	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
+	bundle_publish "github.com/werf/werf/v2/cmd/werf/bundle/publish"
+	bundle_render "github.com/werf/werf/v2/cmd/werf/bundle/render"
+	"github.com/werf/werf/v2/cmd/werf/ci_env"
+	"github.com/werf/werf/v2/cmd/werf/cleanup"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/cmd/werf/common/templates"
+	"github.com/werf/werf/v2/cmd/werf/completion"
+	"github.com/werf/werf/v2/cmd/werf/compose"
+	config_graph "github.com/werf/werf/v2/cmd/werf/config/graph"
+	config_list "github.com/werf/werf/v2/cmd/werf/config/list"
+	config_render "github.com/werf/werf/v2/cmd/werf/config/render"
+	"github.com/werf/werf/v2/cmd/werf/converge"
+	cr_login "github.com/werf/werf/v2/cmd/werf/cr/login"
+	cr_logout "github.com/werf/werf/v2/cmd/werf/cr/logout"
+	"github.com/werf/werf/v2/cmd/werf/dismiss"
+	"github.com/werf/werf/v2/cmd/werf/docs"
+	kubectl2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/kubectl"
+	"github.com/werf/werf/v2/cmd/werf/export"
+	"github.com/werf/werf/v2/cmd/werf/helm"
+	host_cleanup "github.com/werf/werf/v2/cmd/werf/host/cleanup"
+	host_purge "github.com/werf/werf/v2/cmd/werf/host/purge"
+	"github.com/werf/werf/v2/cmd/werf/kube_run"
+	"github.com/werf/werf/v2/cmd/werf/kubectl"
+	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
+	managed_images_ls "github.com/werf/werf/v2/cmd/werf/managed_images/ls"
+	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
+	"github.com/werf/werf/v2/cmd/werf/plan"
+	"github.com/werf/werf/v2/cmd/werf/purge"
+	"github.com/werf/werf/v2/cmd/werf/render"
+	"github.com/werf/werf/v2/cmd/werf/run"
+	"github.com/werf/werf/v2/cmd/werf/slugify"
+	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
+	"github.com/werf/werf/v2/cmd/werf/synchronization"
+	"github.com/werf/werf/v2/cmd/werf/version"
+	"github.com/werf/werf/v2/pkg/telemetry"
 )
 
 func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
@@ -62,36 +59,23 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 	}
 
 	rootCmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "werf",
-		Short: "werf helps to implement and support Continuous Integration and Continuous Delivery",
-		Long: common.GetLongCommandDescription(`werf helps to implement and support Continuous Integration and Continuous Delivery.
-
-Find more information at https://werf.io`),
+		Use:           "werf",
+		Short:         "werf helps to implement and support Continuous Integration and Continuous Delivery",
+		Long:          common.GetLongCommandDescription(`werf helps to implement and support Continuous Integration and Continuous Delivery.`),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	})
 
-	var deliveryCmds []*cobra.Command
-	if dhelm.IsExperimentalEngine() {
-		deliveryCmds = []*cobra.Command{
-			converge.NewCmd(ctx),
-			plan.NewCmd(ctx),
-			dismiss.NewCmd(ctx),
-			bundleCmd(ctx),
-		}
-	} else {
-		deliveryCmds = []*cobra.Command{
-			converge.NewCmd(ctx),
-			dismiss.NewCmd(ctx),
-			bundleCmd(ctx),
-		}
-	}
-
 	groups := &templates.CommandGroups{}
 	*groups = append(*groups, templates.CommandGroups{
 		{
-			Message:  "Delivery commands",
-			Commands: deliveryCmds,
+			Message: "Delivery commands",
+			Commands: []*cobra.Command{
+				converge.NewCmd(ctx),
+				plan.NewCmd(ctx),
+				dismiss.NewCmd(ctx),
+				bundleCmd(ctx),
+			},
 		},
 		{
 			Message: "Cleaning commands",
@@ -139,8 +123,6 @@ Find more information at https://werf.io`),
 
 	templates.ActsAsRootCommand(rootCmd, *groups...)
 
-	setupTelemetryInit(rootCmd)
-
 	return rootCmd, nil
 }
 
@@ -180,8 +162,6 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(
 		bundle_publish.NewCmd(ctx),
 		bundle_apply.NewCmd(ctx),
-		bundle_export.NewCmd(ctx),
-		bundle_download.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
 	)
@@ -243,7 +223,7 @@ func hostCmd(ctx context.Context) *cobra.Command {
 	return hostCmd
 }
 
-func setupTelemetryInit(rootCmd *cobra.Command) {
+func SetupTelemetryInit(rootCmd *cobra.Command) {
 	commandsQueue := []*cobra.Command{rootCmd}
 
 	for len(commandsQueue) > 0 {

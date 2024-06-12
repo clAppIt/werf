@@ -3,7 +3,7 @@ title: Образы и зависимости
 permalink: usage/build/images.html
 ---
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
 
 ## Добавление образов
 
@@ -29,7 +29,7 @@ image: database
 
 ### Dockerfile
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#dockerfile-builder -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#dockerfile-builder -->
 
 #### Написание Dockerfile-инструкций
 
@@ -409,7 +409,7 @@ dependencies:
 
 werf позволяет собирать образы как для родной архитектуры хоста, где запущен werf, так и в кроссплатформенном режиме с помощью эмуляции целевой архитектуры, которая может быть отлична от архитектуры хоста. Также werf позволяет собрать образ сразу для множества целевых платформ.
 
-> **ЗАМЕЧАНИЕ:** Подготовка хост-системы для мультиплатформенной сборки рассмотрена [в разделе установки werf]({{ "index.html" | true_relative_url }}), а поддержка этого режима для различных синтаксисов инструкций и бекендов рассмотрены [в разделе про сборочный процесс]({{ "/usage/build/process.html" | true_relative_url }}).
+> **ЗАМЕЧАНИЕ:** Подготовка хост-системы для мультиплатформенной сборки рассмотрена [в разделе установки werf](https://ru.werf.io/getting_started/), а поддержка этого режима для различных синтаксисов инструкций и бекендов рассмотрены [в разделе про сборочный процесс]({{ "/usage/build/process.html" | true_relative_url }}).
 
 ### Сборка образов под одну целевую платформу
 

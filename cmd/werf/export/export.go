@@ -13,20 +13,20 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/slug"
-	"github.com/werf/werf/pkg/ssh_agent"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -103,14 +103,19 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
-	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupIntrospectAfterError(&commonCmdData, cmd)
+	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
+	common.SetupIntrospectStage(&commonCmdData, cmd)
+
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -145,7 +150,12 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 		return fmt.Errorf("initialization error: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
+	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get container registry mirrors: %w", err)
+	}
+
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
@@ -172,7 +182,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 		return err
 	}
 
-	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 		return err
 	}
 
@@ -236,9 +246,14 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess.OnlyImages)
+	if err != nil {
+		return err
+	}
+
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 	if err != nil {
 		return err
 	}

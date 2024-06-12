@@ -9,17 +9,17 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/cleaning"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -76,8 +76,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupScanContextNamespaceOnly(&commonCmdData, cmd)
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -111,7 +112,12 @@ func runCleanup(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
+	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get container registry mirrors: %w", err)
+	}
+
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
@@ -138,7 +144,7 @@ func runCleanup(ctx context.Context) error {
 		return err
 	}
 
-	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 		return err
 	}
 
@@ -180,8 +186,8 @@ func runCleanup(ctx context.Context) error {
 
 			if isShallow {
 				logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
-				logboek.Warn().LogLn("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.allowFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default, http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
-				logboek.Warn().LogLn("If you still want to use shallow clone, add gitWorktree.forceShallowClone=true directive into werf.yaml (http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
+				logboek.Warn().LogLn("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.allowFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default.")
+				logboek.Warn().LogLn("If you still want to use shallow clone, add gitWorktree.forceShallowClone=true directive into werf.yaml.")
 
 				return fmt.Errorf("git shallow clone is not allowed")
 			}

@@ -4,6 +4,8 @@ on:
     branches:
       - "main"
       - "[0-9]+.[0-9]+.[0-9]+*"
+      - "[0-9]+.[0-9]+"
+      - "[0-9]+"
   repository_dispatch:
     types: ["release:release-please"]
   workflow_dispatch:
@@ -25,8 +27,6 @@ jobs:
         with:
           default-branch: ${{ steps.extract_branch.outputs.branch }}
           release-type: go
-          bump-minor-pre-major: true
-          bump-patch-for-minor-pre-major: true
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-notes-header: "## Changelog"
           release-notes-footer: |

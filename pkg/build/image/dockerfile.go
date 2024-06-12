@@ -12,15 +12,15 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/build/stage"
-	stage_instruction "github.com/werf/werf/pkg/build/stage/instruction"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/dockerfile"
-	"github.com/werf/werf/pkg/dockerfile/frontend"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	stage_instruction "github.com/werf/werf/v2/pkg/build/stage/instruction"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
@@ -35,6 +35,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 
 		d, err := frontend.ParseDockerfileWithBuildkit(dockerfileID, dockerfileData, dockerfileImageConfig.Name, dockerfile.DockerfileOptions{
 			Target:               dockerfileImageConfig.Target,
+			TargetPlatform:       targetPlatform,
 			BuildArgs:            util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
 			AddHost:              dockerfileImageConfig.AddHost,
 			Network:              dockerfileImageConfig.Network,

@@ -11,12 +11,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/test/pkg/utils"
-	"github.com/werf/werf/test/pkg/utils/liveexec"
-	"github.com/werf/werf/test/pkg/utils/resourcesfactory"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
+	"github.com/werf/werf/v2/test/pkg/utils/resourcesfactory"
 )
 
-var _ = Describe("Resources adopter", func() {
+var _ = Describe("Resources adopter", Pending, func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})

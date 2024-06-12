@@ -17,15 +17,15 @@ vars:
   mode: '{{ternary "cgo" "go" (eq .os "linux")}}'
   devBinary: './bin/werf{{if (eq .targetOS "windows")}}.exe{{end}}'
   withCoverageBinary: './bin/werf-with-coverage{{if (eq .targetOS "windows")}}.exe{{end}}'
-  package: "github.com/werf/werf/cmd/werf"
+  package: "github.com/werf/werf/v2/cmd/werf"
 
   cgoTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
   cgoDevLDFlags: "-linkmode external -extldflags=-static"
-  cgoReleaseLDFlags: "-linkmode external -extldflags=-static -s -w -X github.com/werf/werf/pkg/werf.Version={{.version}}"
+  cgoReleaseLDFlags: "-linkmode external -extldflags=-static -s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
 
   goTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp"
   goDevLDFlags: ""
-  goReleaseLDFlags: "-s -w -X github.com/werf/werf/pkg/werf.Version={{.version}}"
+  goReleaseLDFlags: "-s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
 
 tasks:
   _build-and-lint:
@@ -567,7 +567,7 @@ tasks:
 
         # Run compose up in docs directory.
         cd docs
-        which werf >/dev/null || source $(trdl use werf 1.2 beta)
+        which werf >/dev/null || source $(trdl use werf 2 beta)
         werf compose up jekyll_base --dev --docker-compose-command-options="$services" --platform=linux/amd64 || true
 
   compose:up:standalone:
@@ -589,7 +589,7 @@ tasks:
     cmds:
       - |
         cd docs
-        which werf >/dev/null || source $(trdl use werf 1.2 beta)
+        which werf >/dev/null || source $(trdl use werf 2 beta)
         # Workaround: set image variable to stub image.
         WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME=nginx:latest \
         werf compose down

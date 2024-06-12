@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type CmdData struct {
@@ -55,7 +55,6 @@ type CmdData struct {
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	SkipBuild          *bool
 	RequireBuiltImages *bool
 	StubTags           *bool
 
@@ -75,6 +74,7 @@ type CmdData struct {
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 	KubeVersion                     *string
+	ContainerRegistryMirror         *[]string
 
 	LooseGiterminism *bool
 	Dev              *bool
@@ -96,9 +96,6 @@ type CmdData struct {
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
-
-	DeprecatedReportPath   *string
-	DeprecatedReportFormat *string
 
 	SaveBuildReport *bool
 	BuildReportPath *string

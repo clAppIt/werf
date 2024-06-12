@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const GitLabRegistryImplementationName = "gitlab"
@@ -143,7 +143,7 @@ func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string,
 	}
 
 	scope := scopeFunc(ref)
-	tr, err := transport.New(ref.Context().Registry, auth, getHttpTransport(false), scope)
+	tr, err := transport.New(ref.Context().Registry, auth, r.api.httpTransport, scope)
 	if err != nil {
 		return err
 	}

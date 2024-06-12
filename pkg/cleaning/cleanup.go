@@ -13,16 +13,16 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/cleaning/allow_list"
-	"github.com/werf/werf/pkg/cleaning/git_history_based_cleanup"
-	"github.com/werf/werf/pkg/cleaning/stage_manager"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/cleaning/allow_list"
+	"github.com/werf/werf/v2/pkg/cleaning/git_history_based_cleanup"
+	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type CleanupOptions struct {
@@ -1043,21 +1043,13 @@ func handleDeletionError(err error) error {
 
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token, --repo-docker-hub-username and --repo-docker-hub-password options.
-Be aware that access to the resource is forbidden with personal access token.
-Read more details here https://werf.io/documentation/usage/cleanup/cr_cleanup.html#docker-hub`, err)
+Be aware that access to the resource is forbidden with personal access token.`, err)
 	case docker_registry.IsGitHubPackagesUnauthorizedErr(err), docker_registry.IsGitHubPackagesForbiddenErr(err):
 		return fmt.Errorf(`%w
 
 You should specify a token with delete:packages and read:packages scopes to remove package versions.
 Check --repo-github-token option.
-Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.
-Read more details here https://werf.io/documentation/usage/cleanup/cr_cleanup.html#github-packages`, err)
-	case docker_registry.IsSelectelUnauthorizedErr(err):
-		return fmt.Errorf(`%w
-
-You should specify Serectel cloud container registry (cr) credentials: username, password, account and VPC to remove tags with Selectel CR API.
-Check --repo-selectel-username, --repo-selectel-password, --repo-selectel-account and --repo-selectel-vpc or --repo-selectel-vpc-id options.
-Read more details here https://werf.io/documentation/usage/cleanup/cr_cleanup.html#selectel-craas`, err)
+Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.`, err)
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerErr(err) {
 			return err

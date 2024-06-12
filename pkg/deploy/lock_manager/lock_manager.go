@@ -9,9 +9,9 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
-	"github.com/werf/werf/pkg/kubeutils"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/locker_with_retry"
+	"github.com/werf/werf/v2/pkg/kubeutils"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/locker_with_retry"
 )
 
 // NOTE: LockManager for not is not multithreaded due to the lack of support of contexts in the lockgate library
@@ -36,7 +36,7 @@ func NewConfigMapLocker(configMapName, namespace string, locker lockgate.Locker)
 
 func (locker *ConfigMapLocker) Acquire(lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
 	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, locker.Namespace, locker.ConfigMapName); err != nil {
-		return false, lockgate.LockHandle{}, fmt.Errorf("unable to prepare kubernetes cm/%s in ns/%s: %w", locker.Namespace, locker.ConfigMapName, err)
+		return false, lockgate.LockHandle{}, fmt.Errorf("unable to prepare kubernetes cm/%s in ns/%s: %w", locker.ConfigMapName, locker.Namespace, err)
 	}
 	return locker.Locker.Acquire(lockName, opts)
 }

@@ -16,11 +16,11 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/deploy/helm"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 type BundleOptions struct {
@@ -61,7 +61,7 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 
 	extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
 
-	bundle.extraAnnotationsAndLabelsPostRenderer = extraAnnotationsAndLabelsPostRenderer
+	bundle.ExtraAnnotationsAndLabelsPostRenderer = extraAnnotationsAndLabelsPostRenderer
 
 	return bundle, nil
 }
@@ -71,16 +71,16 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
  * which could be used during helm install/upgrade process
  */
 type Bundle struct {
-	Dir                        string
-	SecretValueFiles           []string
-	HelmChart                  *chart.Chart
-	HelmEnvSettings            *cli.EnvSettings
-	RegistryClient             *registry.Client
-	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
-	DisableDefaultValues       bool
+	Dir                                   string
+	SecretValueFiles                      []string
+	HelmChart                             *chart.Chart
+	HelmEnvSettings                       *cli.EnvSettings
+	RegistryClient                        *registry.Client
+	BuildChartDependenciesOpts            command_helpers.BuildChartDependenciesOptions
+	DisableDefaultValues                  bool
+	ExtraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 
-	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
-	secretsManager                        *secrets_manager.SecretsManager
+	secretsManager *secrets_manager.SecretsManager
 
 	*secrets.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
@@ -95,7 +95,7 @@ func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) po
 		chain = append(chain, postRenderer)
 	}
 
-	chain = append(chain, bundle.extraAnnotationsAndLabelsPostRenderer)
+	chain = append(chain, bundle.ExtraAnnotationsAndLabelsPostRenderer)
 
 	return helm.NewPostRendererChain(chain...)
 }
@@ -145,7 +145,6 @@ func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]i
 // SetupTemplateFuncs method for the chart.Extender interface
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
 	helpers.SetupIncludeWrapperFuncs(funcMap)
-	helpers.SetupWerfImageDeprecationFunc(bundle.ChartExtenderContext, funcMap)
 }
 
 func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {

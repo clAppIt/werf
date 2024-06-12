@@ -1,5 +1,228 @@
 # Changelog
 
+## [2.5.0](https://www.github.com/werf/werf/compare/v2.4.1...v2.5.0) (2024-06-07)
+
+
+### Features
+
+* **build, dockerfile, multiplatform:** support automatic platform ARGs ([fbca962](https://www.github.com/werf/werf/commit/fbca962fb5351a0b0892af98ada05911cdf90f73))
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile:** fix multi-stage does not work properly ([02da623](https://www.github.com/werf/werf/commit/02da623ae8316ed2ddc81b68685fdf4325ccc7e9))
+* **dev:** disable signing for service commits ([cfcee71](https://www.github.com/werf/werf/commit/cfcee71ff1ea18a513e769e89e1bd20b77ec51e5))
+
+### [2.4.1](https://www.github.com/werf/werf/compare/v2.4.0...v2.4.1) (2024-06-05)
+
+
+### Bug Fixes
+
+* **deploy:** bundle apply not overriding project.werf.io/env annotation ([937b452](https://www.github.com/werf/werf/commit/937b45299073ec33fdf3523fff319286ab1308cb))
+* **deploy:** panics when some manifest fields are of wrong type ([9e9926b](https://www.github.com/werf/werf/commit/9e9926b716c167f428136d77f6e453b1117938f9))
+
+## [2.4.0](https://www.github.com/werf/werf/compare/v2.3.3...v2.4.0) (2024-05-31)
+
+
+### Features
+
+* **build:** new option --container-registry-mirror ([bf185f2](https://www.github.com/werf/werf/commit/bf185f273076bbad8f68c5afbed820faed944559))
+
+### [2.3.3](https://www.github.com/werf/werf/compare/v2.3.2...v2.3.3) (2024-05-30)
+
+
+### Bug Fixes
+
+* **build, buildah:** multiple registry mirrors broken ([0acd5f0](https://www.github.com/werf/werf/commit/0acd5f0b8e03bb328d55e6727c383b9cde90a28c))
+
+### [2.3.2](https://www.github.com/werf/werf/compare/v2.3.1...v2.3.2) (2024-05-30)
+
+
+### Bug Fixes
+
+* **build, buildah:** prefix registries mirrors with https /2 ([0966521](https://www.github.com/werf/werf/commit/096652184198f6ef917e2e59d30af5b6104206e2))
+
+### [2.3.1](https://www.github.com/werf/werf/compare/v2.3.0...v2.3.1) (2024-05-30)
+
+
+### Bug Fixes
+
+* **build, buildah:** add default registry for mirrors docker.io ([a974a1d](https://www.github.com/werf/werf/commit/a974a1d55fa388d10d7da45f11672f613e143ca5))
+* **build, buildah:** prefix registries mirrors with https ([6113528](https://www.github.com/werf/werf/commit/611352856b9a42cfac935707602b58611742a5a6))
+
+## [2.3.0](https://www.github.com/werf/werf/compare/v2.2.0...v2.3.0) (2024-05-30)
+
+
+### Features
+
+* **build, buildah:** support mirror registries (v1) ([4720b46](https://www.github.com/werf/werf/commit/4720b46f818b148df2d9996565525ae10922a187))
+* **other:** use docker hub if registry address not specified in `werf cr` ([661f357](https://www.github.com/werf/werf/commit/661f35727a9ddf21495e592c33768cd1a235d41b))
+
+## [2.2.0](https://www.github.com/werf/werf/compare/v2.1.0...v2.2.0) (2024-05-24)
+
+
+### Features
+
+* **build:** publish custom tags and final images in parallel ([ff2843a](https://www.github.com/werf/werf/commit/ff2843a50c8ba22111a1b3b7716ad94fe6cf76a1))
+* **deploy:** new `werf.io/deploy-dependency-<name>` annotation ([3e76f87](https://www.github.com/werf/werf/commit/3e76f87e6f5d332c14ac28037e0b1b3a0e31cee7))
+* **harbor:** try to get the image again due to PROJECTPOLICYVIOLATION error ([b7044c1](https://www.github.com/werf/werf/commit/b7044c1ea9976c95df6e4c3a87f39425ebd0e128))
+
+
+### Bug Fixes
+
+* **deploy:** `werf.io/deploy-dependency-..` anno params should be comma-separated ([17639e5](https://www.github.com/werf/werf/commit/17639e5a388333595836ff1d1914eeb974475b53))
+* prevent growing TCP connections by using a shared HTTP transport ([59f4ec8](https://www.github.com/werf/werf/commit/59f4ec87ea6cb28e818ccc595a4e8da58ba30674))
+
+## [2.1.0](https://www.github.com/werf/werf/compare/v2.0.4...v2.1.0) (2024-05-20)
+
+
+### Features
+
+* **values:** env WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES=1 will disable global service values ([3949b70](https://www.github.com/werf/werf/commit/3949b70af9330ff4262c402073ed9e9c26755474))
+
+
+### Bug Fixes
+
+* **deploy:** stable resource sorting in Helm release manifests ([333ac86](https://www.github.com/werf/werf/commit/333ac8636ea12ee6a2c72cd825f3f4410501d09d))
+
+### [2.0.4](https://www.github.com/werf/werf/compare/v2.0.3...v2.0.4) (2024-05-13)
+
+
+### Bug Fixes
+
+* **ci-env:** fix unable to copy "/Users/username/.docker/mutagen" ([6cac137](https://www.github.com/werf/werf/commit/6cac13729e72f47a9636b9bab47473c7043ea07e))
+* docs routing ([2734bd9](https://www.github.com/werf/werf/commit/2734bd9dca08c5037b06efd3d3172dd5dc810aeb))
+* **docs:** fix routing /3 ([306422f](https://www.github.com/werf/werf/commit/306422f1aaa446938f44d6936e82cce0260e30e2))
+
+### [2.0.3](https://www.github.com/werf/werf/compare/v2.0.2...v2.0.3) (2024-04-25)
+
+
+### Bug Fixes
+
+* **v2:** replace leftovers of v1.2 to v2 /2 ([d6cacfb](https://www.github.com/werf/werf/commit/d6cacfbc24ddef174ed2cb73206cbd9d8ecf85ab))
+
+### [2.0.2](https://www.github.com/werf/werf/compare/v2.0.1...v2.0.2) (2024-04-24)
+
+
+### Bug Fixes
+
+* **v2:** panic with --add-annotations ([b8b9e83](https://www.github.com/werf/werf/commit/b8b9e839811de0d8f362dac761abcc0c6fa350d6))
+
+### [2.0.1](https://www.github.com/werf/werf/compare/v2.0.0...v2.0.1) (2024-04-24)
+
+
+### Bug Fixes
+
+* **cleanup:** remove unnecessary specific implementation for selectel ([88d0d65](https://www.github.com/werf/werf/commit/88d0d650f25d1cb6773ea784aa8b559c32867a90))
+* **v2:** werf version is always dev ([9876a4e](https://www.github.com/werf/werf/commit/9876a4e2194f1210cb82da80f0fda908ccb0df4f))
+
+## [2.0.0](https://www.github.com/werf/werf/compare/v1.2.307...v2.0.0) (2024-04-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* new 2.0 release
+
+### Features
+
+* new 2.0 release ([16a2ac7](https://www.github.com/werf/werf/commit/16a2ac7522a4da86060a2781bd7b6055dfc9a139))
+* new major v2 release ([e15cf3c](https://www.github.com/werf/werf/commit/e15cf3ce7ce16de984856e651e87067367e55b3e))
+* **v2:** "werf render" now uses Nelm ([03e05a5](https://www.github.com/werf/werf/commit/03e05a598cad5350a0f55baa5927c6b785228d1c))
+* **v2:** remove --...-implementation flags ([82b548f](https://www.github.com/werf/werf/commit/82b548fc33af024b97421a68e120da475e49be71))
+* **v2:** remove deprecated --report-path and --report-format ([4f26904](https://www.github.com/werf/werf/commit/4f26904c1847d68d0384ad609aec65192585f431))
+* **v2:** remove deprecated --skip-build option ([14d1c72](https://www.github.com/werf/werf/commit/14d1c72c49b7485a9e5133eca76973c9152ab5f2))
+* **v2:** remove deprecated --tag/--to-tag/--repo from "werf bundle copy" ([1a4bea1](https://www.github.com/werf/werf/commit/1a4bea1509128795eea235d9a4131e6647611535))
+* **v2:** remove deprecated "werf_image" Helm templates function ([8721568](https://www.github.com/werf/werf/commit/87215684e745138f74f151af7dd19a39ef399198))
+* **v2:** switch "werf bundle render" to Nelm ([24f3042](https://www.github.com/werf/werf/commit/24f30427a5ef799fbf570ba74284897cc8d89b98))
+
+
+### Bug Fixes
+
+* **deploy:** incorrect error message when release lock fails ([7f60ccc](https://www.github.com/werf/werf/commit/7f60cccc92a0db5597b275c83579eda1350e7958))
+* remove deprecated werf bundle export/download commands ([dd9bc09](https://www.github.com/werf/werf/commit/dd9bc0954f6e73c3c567a4cbd23d57b09f5d194c))
+* **v2:** dont save service annotations in release secret ([27d6c4d](https://www.github.com/werf/werf/commit/27d6c4d09330877a935263b236e19b7023c7bfb3))
+* **v2:** enable Nelm by default, remove option to switch back to the old engine ([9df5245](https://www.github.com/werf/werf/commit/9df5245c5063c94a838e68b912686d56e6644462))
+* **v2:** remove automigration from helm 2 to helm 3 releases ([316caee](https://www.github.com/werf/werf/commit/316caee9779cedbfb8ef4b18351b350c35e2523f))
+* **v2:** replace leftovers of v1.2 with v2 ([940fefe](https://www.github.com/werf/werf/commit/940fefe706f404f047fb4ccf025248164a3c0351))
+
+### [1.2.307](https://www.github.com/werf/werf/compare/v1.2.306...v1.2.307) (2024-04-09)
+
+
+### Features
+
+* **nelm:** switch back to the old deployment engine by default ([439b0d4](https://www.github.com/werf/werf/commit/439b0d489c0a31fa138ce54ddae6c6f822573282))
+
+### [1.2.306](https://www.github.com/werf/werf/compare/v1.2.305...v1.2.306) (2024-04-09)
+
+
+### Bug Fixes
+
+* **nelm:** multiple delete policies ignored ([8778984](https://www.github.com/werf/werf/commit/87789846101c604d748614b4233aefe6dda75740))
+* **nelm:** release namespace and hook never deleted (except recreation) ([10ae8b5](https://www.github.com/werf/werf/commit/10ae8b57b5550974a7fd142533db43cf63528a5b))
+
+### [1.2.305](https://www.github.com/werf/werf/compare/v1.2.304...v1.2.305) (2024-04-05)
+
+
+### Bug Fixes
+
+* **nelm:** --save-deploy-report not saving report on skipped release /2 ([83190c2](https://www.github.com/werf/werf/commit/83190c2055d701b5724edf96f6bb0e9960cd719a))
+
+### [1.2.304](https://www.github.com/werf/werf/compare/v1.2.303...v1.2.304) (2024-04-05)
+
+
+### Bug Fixes
+
+* **doc:** remove references to werf.yaml and .helm from commands that ignore project configs ([9ce7b84](https://www.github.com/werf/werf/commit/9ce7b849782bcab5314699b4004f5beeff40e0b6))
+* **nelm:** --save-deploy-report not saving report on skipped release ([a03ed79](https://www.github.com/werf/werf/commit/a03ed793428daeb6175359c6df5e1484a81c312e))
+
+### [1.2.303](https://www.github.com/werf/werf/compare/v1.2.302...v1.2.303) (2024-04-04)
+
+
+### Features
+
+* **deps:** update Nelm ([0c8f786](https://www.github.com/werf/werf/commit/0c8f78658397979f06b34cd8e136fc22ac23599a))
+* **nelm:** deploy bundles using new deployment engine ([a87ad6e](https://www.github.com/werf/werf/commit/a87ad6ee5bcd4408edefc11e3a8853f2854193a4))
+* **nelm:** skip removal of resources with missing/incorrect release annotations and labels ([dc81fc3](https://www.github.com/werf/werf/commit/dc81fc36603165937a8013c839082f28595943b8))
+
+
+### Bug Fixes
+
+* **nelm:** "werf converge" panics on first release ([4272ea6](https://www.github.com/werf/werf/commit/4272ea671439d71995d455f7a72b3fef9c6cb08c))
+* **nelm:** allow empty helm.sh/hook-delete-policy and werf.io/delete-policy ([187fc7e](https://www.github.com/werf/werf/commit/187fc7ec6716f516b7e00b5aafd53328bfb25384))
+* **nelm:** don't skip release if all resources up-to-date but the release itself changed ([e208e9c](https://www.github.com/werf/werf/commit/e208e9c748c792696355029047e7e14bfe0c76fd))
+* **nelm:** missing expected annotations values in adoption errors ([5fc5817](https://www.github.com/werf/werf/commit/5fc581786982cc375fb465d3251d6a5e41ef1c75))
+
+### [1.2.302](https://www.github.com/werf/werf/compare/v1.2.301...v1.2.302) (2024-04-01)
+
+
+### Features
+
+* **nelm:** change propagation policy on DELETE from Auto to Foreground ([d7906f0](https://www.github.com/werf/werf/commit/d7906f02807d3a611c067ed4cf2c939a98d2ecf7))
+
+### [1.2.301](https://www.github.com/werf/werf/compare/v1.2.300...v1.2.301) (2024-03-29)
+
+
+### Features
+
+* **deps:** mini bump all modules ([8802bd7](https://www.github.com/werf/werf/commit/8802bd7c9557a817249b56c5f3310cf8b9121db4))
+
+
+### Bug Fixes
+
+* **buildah:** "could not find netavark" error ([0503170](https://www.github.com/werf/werf/commit/0503170d918988bd0b32a74a89660668e9b9db5f))
+* **buildah:** "unknown version specified" error ([d475c14](https://www.github.com/werf/werf/commit/d475c1422d62f1ed4fbff4d23ad003b3daecd74a))
+* **buildah:** unable to find "pasta" binary ([858933f](https://www.github.com/werf/werf/commit/858933f6c5f66541af0dcb4fee452dd73cccf277))
+* **deps:** update all direct dependencies ([48641a0](https://www.github.com/werf/werf/commit/48641a09010a39065a80df754e39dd73dda53e24))
+* **deps:** update Helm to v3.14.3 ([049f682](https://www.github.com/werf/werf/commit/049f682d9710224ebb6f0c3ec46c2f402f2ae6c4))
+* e2e converge tests after Nelm migration ([216d363](https://www.github.com/werf/werf/commit/216d3636eabe6d4b19701efc93cb3a2ba2191c2b))
+* **nelm:** --status-progress-period=-1 panics ([aa152f6](https://www.github.com/werf/werf/commit/aa152f6b84803a16ad9f6df4b400b289d09a7876))
+* **nelm:** don't show logs produced before current release ([7067534](https://www.github.com/werf/werf/commit/70675344d7a6db8f2421b18f3839254a48c25767))
+* **nelm:** Jobs not failing on errors /2 ([688b760](https://www.github.com/werf/werf/commit/688b760ac21f4ac6851a87e3194a6da8a915fa47))
+* **nelm:** tracking might hang with werf.io/track-termination-mode: "NonBlocking" ([c0fda6b](https://www.github.com/werf/werf/commit/c0fda6b4cd76207be5b145ddb5d00838be73d42d))
+* **stapel:** copying suitable stage from secondary might break reproducibility of subsequent stages ([96dddad](https://www.github.com/werf/werf/commit/96dddad4713f15fe6f179a1b4d05490e1ad2a49e))
+* **stapel:** discarding newly built image might break reproducibility of subsequent stages ([78d2905](https://www.github.com/werf/werf/commit/78d2905ca1efc52bf5608372d4bed38a9b40b65f))
+* **stapel:** using suitable stage might break reproducibility of subsequent stages ([f0a618c](https://www.github.com/werf/werf/commit/f0a618c38d55a26f40c480aed4502d257dd8b101))
+
 ### [1.2.300](https://www.github.com/werf/werf/compare/v1.2.299...v1.2.300) (2024-03-21)
 
 
@@ -2361,7 +2584,7 @@
 
 ### Docs
 
-* New docs for running werf in container (experimental): [https://werf.io/documentation/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html](https://werf.io/documentation/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html).
+* New docs for running werf in container (experimental): [https://werf.io/docs/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html](https://werf.io/docs/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html).
 
 ### Bug Fixes
 
@@ -2526,7 +2749,7 @@
 * For cleaning custom tags and associated content-based tag are treated as one:
   * The cleanup command deletes/keeps all tags following the cleaning policies for content-based tags.
   * The cleanup command keeps all when any tag is used in k8s.
-* By default, alias tags are not allowed by giterminism, and it is necessary to use [werf-giterminism.yaml](https://werf.io/documentation/v1.2/reference/werf_giterminism_yaml.html) to activate options:
+* By default, alias tags are not allowed by giterminism, and it is necessary to use [werf-giterminism.yaml](https://werf.io/docs/v1.2/reference/werf_giterminism_yaml.html) to activate options:
     ```yaml
     giterminismConfigVersion: 1 
     cli:

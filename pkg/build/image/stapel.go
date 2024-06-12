@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/git_repo"
 )
 
 func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
@@ -150,8 +150,8 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 					}
 				} else {
 					logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.allowUnshallow=true werf.yaml directive (which is enabled by default, http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
-					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.forceShallowClone=true werf.yaml directive (http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
+					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.allowUnshallow=true werf.yaml directive")
+					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.forceShallowClone=true werf.yaml directive.")
 
 					return nil, fmt.Errorf("shallow git clone is not allowed")
 				}

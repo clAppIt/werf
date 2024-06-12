@@ -12,11 +12,11 @@ import (
 	"oras.land/oras-go/pkg/auth/docker"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/cmd/werf/common"
-	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -52,12 +52,18 @@ werf cr login --insecure-registry registry.example.com`,
 				return err
 			}
 
-			if len(args) != 1 {
+			var registry string
+			switch {
+			case len(args) == 0:
+				registry = "https://index.docker.io/v1/"
+			case len(args) == 1:
+				registry = args[0]
+			default: // len(args) > 1
 				common.PrintHelp(cmd)
-				return fmt.Errorf("registry address argument required")
+				return fmt.Errorf("invalid number of arguments, expected optional registry address: got %d arguments", len(args))
 			}
 
-			return Login(ctx, args[0], LoginOptions{
+			return Login(ctx, registry, LoginOptions{
 				Username:         cmdData.Username,
 				Password:         cmdData.Password,
 				PasswordStdin:    cmdData.PasswordStdin,

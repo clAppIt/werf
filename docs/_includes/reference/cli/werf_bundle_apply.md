@@ -32,6 +32,11 @@ werf bundle apply [options]
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
+      --deploy-graph-path=''
+            Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
+            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -51,8 +56,8 @@ werf bundle apply [options]
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
+            (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config=''
@@ -90,11 +95,11 @@ werf bundle apply [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace=''
-            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
-            deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+            Use specified Kubernetes namespace (default $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --release=''
-            Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
-            deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+            Use specified Helm release name (default $WERF_RELEASE)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=''
@@ -102,7 +107,7 @@ werf bundle apply [options]
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -119,24 +124,16 @@ werf bundle apply [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --repo-selectel-account=''
-            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
-      --repo-selectel-password=''
-            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
-      --repo-selectel-username=''
-            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
-      --repo-selectel-vpc=''
-            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
-      --repo-selectel-vpc-id=''
-            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
+      --rollback-graph-path=''
+            Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
+            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --save-deploy-report=false
             Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
             configured with --deploy-report-path
       --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
-            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
+            Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml,       
+            $WERF_SECRET_VALUES_DB=secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
@@ -170,8 +167,8 @@ werf bundle apply [options]
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
-            Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,      
-            $WERF_VALUES_2=.helm/values_2.yaml)
+            Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml,                         
+            $WERF_VALUES_2=values_2.yaml)
 ```
 

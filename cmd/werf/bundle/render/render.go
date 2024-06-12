@@ -4,28 +4,44 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/chartutil"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	helmstorage "helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/deploy/bundles"
-	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/nelm/pkg/chrttree"
+	helmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/kubeclnt"
+	"github.com/werf/nelm/pkg/resrc"
+	"github.com/werf/nelm/pkg/resrcpatcher"
+	"github.com/werf/nelm/pkg/resrcprocssr"
+	"github.com/werf/nelm/pkg/rlshistor"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/deploy/bundles"
+	"github.com/werf/werf/v2/pkg/deploy/helm"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -72,8 +88,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -85,15 +102,17 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd)
-	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd, false)
+	common.SetupSecretValues(&commonCmdData, cmd, false)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 
-	common.SetupRelease(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupNamespace(&commonCmdData, cmd, false)
 
 	common.SetupKubeVersion(&commonCmdData, cmd)
+
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -164,7 +183,12 @@ func runRender(ctx context.Context) error {
 	if isLocal {
 		bundleDir = cmdData.BundleDir
 	} else {
-		if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
+		registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get container registry mirrors: %w", err)
+		}
+
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 			return err
 		}
 
@@ -184,10 +208,6 @@ func runRender(ctx context.Context) error {
 		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundleDir, bundlesRegistryClient); err != nil {
 			return fmt.Errorf("unable to pull bundle: %w", err)
 		}
-	}
-
-	if *commonCmdData.Environment != "" {
-		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
@@ -223,6 +243,178 @@ func runRender(ctx context.Context) error {
 		},
 	}
 
+	networkParallelism := common.GetNetworkParallelism(&commonCmdData)
+
+	serviceAnnotations := map[string]string{}
+	extraAnnotations := map[string]string{}
+	for key, value := range bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations {
+		if strings.HasPrefix(key, "project.werf.io/") ||
+			strings.Contains(key, "ci.werf.io/") ||
+			key == "werf.io/release-channel" {
+			serviceAnnotations[key] = value
+		} else {
+			extraAnnotations[key] = value
+		}
+	}
+
+	serviceAnnotations["werf.io/version"] = werf.Version
+	if *commonCmdData.Environment != "" {
+		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	}
+
+	extraLabels := bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraLabels
+
+	var clientFactory *kubeclnt.ClientFactory
+	if cmdData.Validate {
+		clientFactory, err = kubeclnt.NewClientFactory()
+		if err != nil {
+			return fmt.Errorf("error creating kube client factory: %w", err)
+		}
+	}
+
+	var releaseNamespaceOptions resrc.ReleaseNamespaceOptions
+	if cmdData.Validate {
+		releaseNamespaceOptions.Mapper = clientFactory.Mapper()
+	}
+
+	releaseNamespace := resrc.NewReleaseNamespace(&unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Namespace",
+			"metadata": map[string]interface{}{
+				"name": lo.WithoutEmpty([]string{namespace, helm_v3.Settings.Namespace()})[0],
+			},
+		},
+	}, releaseNamespaceOptions)
+
+	// FIXME(ilya-lesikov): there is more chartpath options, are they needed?
+	chartPathOptions := action.ChartPathOptions{}
+	chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
+
+	if !cmdData.Validate {
+		mem := driver.NewMemory()
+		mem.SetNamespace(releaseNamespace.Name())
+		actionConfig.Releases = helmstorage.Init(mem)
+
+		actionConfig.KubeClient = &kubefake.PrintingKubeClient{Out: ioutil.Discard}
+		actionConfig.Capabilities = chartutil.DefaultCapabilities.Copy()
+
+		if *commonCmdData.KubeVersion != "" {
+			if kubeVersion, err := chartutil.ParseKubeVersion(*commonCmdData.KubeVersion); err != nil {
+				return fmt.Errorf("invalid kube version %q: %w", kubeVersion, err)
+			} else {
+				actionConfig.Capabilities.KubeVersion = *kubeVersion
+			}
+		}
+	}
+
+	var historyOptions rlshistor.HistoryOptions
+	if cmdData.Validate {
+		historyOptions.Mapper = clientFactory.Mapper()
+		historyOptions.DiscoveryClient = clientFactory.Discovery()
+	}
+
+	history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, historyOptions)
+	if err != nil {
+		return fmt.Errorf("error constructing release history: %w", err)
+	}
+
+	prevRelease, prevReleaseFound, err := history.LastRelease()
+	if err != nil {
+		return fmt.Errorf("error getting last deployed release: %w", err)
+	}
+
+	_, prevDeployedReleaseFound, err := history.LastDeployedRelease()
+	if err != nil {
+		return fmt.Errorf("error getting last deployed release: %w", err)
+	}
+
+	var newRevision int
+	if prevReleaseFound {
+		newRevision = prevRelease.Revision() + 1
+	} else {
+		newRevision = 1
+	}
+
+	var deployType helmcommon.DeployType
+	if prevReleaseFound && prevDeployedReleaseFound {
+		deployType = helmcommon.DeployTypeUpgrade
+	} else if prevReleaseFound {
+		deployType = helmcommon.DeployTypeInstall
+	} else {
+		deployType = helmcommon.DeployTypeInitial
+	}
+
+	chartTreeOptions := chrttree.ChartTreeOptions{
+		StringSetValues: common.GetSetString(&commonCmdData),
+		SetValues:       common.GetSet(&commonCmdData),
+		FileValues:      common.GetSetFile(&commonCmdData),
+		ValuesFiles:     common.GetValues(&commonCmdData),
+	}
+	if cmdData.Validate {
+		chartTreeOptions.Mapper = clientFactory.Mapper()
+		chartTreeOptions.DiscoveryClient = clientFactory.Discovery()
+	}
+
+	chartTree, err := chrttree.NewChartTree(
+		ctx,
+		bundle.Dir,
+		releaseName,
+		releaseNamespace.Name(),
+		newRevision,
+		deployType,
+		actionConfig,
+		chartTreeOptions,
+	)
+	if err != nil {
+		return fmt.Errorf("error constructing chart tree: %w", err)
+	}
+
+	var prevRelGeneralResources []*resrc.GeneralResource
+	if prevReleaseFound {
+		prevRelGeneralResources = prevRelease.GeneralResources()
+	}
+
+	resProcessorOptions := resrcprocssr.DeployableResourcesProcessorOptions{
+		NetworkParallelism: networkParallelism,
+		ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+			resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+		},
+		ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+			resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+		},
+		DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
+			resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
+		},
+		DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+			resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
+		},
+		DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+			resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
+		},
+	}
+	if cmdData.Validate {
+		resProcessorOptions.KubeClient = clientFactory.KubeClient()
+		resProcessorOptions.Mapper = clientFactory.Mapper()
+		resProcessorOptions.DiscoveryClient = clientFactory.Discovery()
+		resProcessorOptions.AllowClusterAccess = true
+	}
+
+	resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
+		deployType,
+		releaseName,
+		releaseNamespace,
+		chartTree.StandaloneCRDs(),
+		chartTree.HookResources(),
+		chartTree.GeneralResources(),
+		prevRelGeneralResources,
+		resProcessorOptions,
+	)
+
+	if err := resProcessor.Process(ctx); err != nil {
+		return fmt.Errorf("error processing deployable resources: %w", err)
+	}
+
 	var output io.Writer
 	if cmdData.RenderOutput != "" {
 		if f, err := os.Create(cmdData.RenderOutput); err != nil {
@@ -235,22 +427,50 @@ func runRender(ctx context.Context) error {
 		output = os.Stdout
 	}
 
-	helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, output, helm_v3.TemplateCmdOptions{
-		StagesSplitter:    helm.NewStagesSplitter(),
-		ChainPostRenderer: bundle.ChainPostRenderer,
-		ValueOpts: &values.Options{
-			ValueFiles:   common.GetValues(&commonCmdData),
-			StringValues: common.GetSetString(&commonCmdData),
-			Values:       common.GetSet(&commonCmdData),
-			FileValues:   common.GetSetFile(&commonCmdData),
-		},
-		Validate:    &cmdData.Validate,
-		IncludeCrds: &cmdData.IncludeCRDs,
-		KubeVersion: commonCmdData.KubeVersion,
-	})
+	if cmdData.IncludeCRDs {
+		crds := resProcessor.DeployableStandaloneCRDs()
 
-	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, bundleDir}); err != nil {
-		return fmt.Errorf("helm templates rendering failed: %w", err)
+		for _, res := range crds {
+			if err := renderResource(res.Unstructured(), res.FilePath(), output); err != nil {
+				return fmt.Errorf("error rendering CRD %q: %w", res.HumanID(), err)
+			}
+		}
+	}
+
+	hooks := resProcessor.DeployableHookResources()
+
+	for _, res := range hooks {
+		if err := renderResource(res.Unstructured(), res.FilePath(), output); err != nil {
+			return fmt.Errorf("error rendering hook resource %q: %w", res.HumanID(), err)
+		}
+	}
+
+	resources := resProcessor.DeployableGeneralResources()
+
+	for _, res := range resources {
+		if err := renderResource(res.Unstructured(), res.FilePath(), output); err != nil {
+			return fmt.Errorf("error rendering general resource %q: %w", res.HumanID(), err)
+		}
+	}
+
+	return nil
+}
+
+func renderResource(unstruct *unstructured.Unstructured, path string, output io.Writer) error {
+	resourceJsonBytes, err := runtime.Encode(unstructured.UnstructuredJSONScheme, unstruct)
+	if err != nil {
+		return fmt.Errorf("encoding failed: %w", err)
+	}
+
+	resourceYamlBytes, err := yaml.JSONToYAML(resourceJsonBytes)
+	if err != nil {
+		return fmt.Errorf("marshalling to YAML failed: %w", err)
+	}
+
+	prefixBytes := []byte(fmt.Sprintf("---\n# Source: %s\n", path))
+
+	if _, err := output.Write(append(prefixBytes, resourceYamlBytes...)); err != nil {
+		return fmt.Errorf("writing to output failed: %w", err)
 	}
 
 	return nil

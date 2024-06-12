@@ -66,7 +66,7 @@ func PostponeMultiwerfNotUpToDateWarning() {
 		GlobalWarningLines = append(
 			GlobalWarningLines,
 			fmt.Sprintf("Failure detecting whether multiwerf (if present) is outdated: %s", err),
-			"multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl by following these instructions: https://werf.io/installation.html",
+			"multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl",
 		)
 		return
 	} else if multiwerfIsUpToDate {
@@ -76,7 +76,7 @@ func PostponeMultiwerfNotUpToDateWarning() {
 	GlobalWarningLines = append(
 		GlobalWarningLines,
 		"multiwerf detected, but it is out of date. multiwerf is deprecated in favor of trdl: https://github.com/werf/trdl",
-		"If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl by following these instructions: https://werf.io/installation.html",
+		"If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl",
 	)
 }
 

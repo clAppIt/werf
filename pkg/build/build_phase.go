@@ -19,20 +19,21 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/build/image"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/build/stage/instruction"
-	"github.com/werf/werf/pkg/container_backend"
-	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/git_repo"
-	imagePkg "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/stage/instruction"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type BuildPhaseOptions struct {
@@ -197,8 +198,13 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		commonTargetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
-		name, images := desc.Unpair()
+	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
+	if err := parallel.DoTasks(ctx, len(imagesPairs), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: phase.Conveyor.StorageManager.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		pair := imagesPairs[taskId]
+
+		name, images := pair.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
@@ -289,6 +295,10 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		}
+
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	return phase.createReport(ctx)
@@ -832,6 +842,9 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				i.Image.SetStageDescription(copiedStageDesc)
 				stg.SetStageImage(i)
 
+				// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
+				stg.SetContentDigest(copiedStageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel])
+
 				logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform())
 
@@ -903,9 +916,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	opts.CacheVersionParts = nil
 	opts.TargetPlatform = img.TargetPlatform
 
-	if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-			if !stg.HasPrevStage() {
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		if !stg.HasPrevStage() {
+			// FIXME: For werf.StagedDockerfileV2, this logic should also be the default.
+			// Currently, to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
+			// Eventually, this behavior should be default for all versions without the extra if condition.
+			if img.IsBasedOnStage() || werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
 				opts.BaseImage = img.GetBaseImageReference()
 			}
 		}
@@ -925,27 +941,35 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		}).
 		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
 
-	foundSuitableStage := false
 	storageManager := phase.Conveyor.StorageManager
-	if stages, err := storageManager.GetStagesByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest); err != nil {
+	stages, err := storageManager.GetStagesByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest)
+	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
+	}
+
+	stageDesc, err := storageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages)
+	if err != nil {
+		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
+	}
+
+	var stageContentSig string
+	foundSuitableStage := false
+	if stageDesc != nil {
+		i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
+		i.Image.SetStageDescription(stageDesc)
+		stg.SetStageImage(i)
+		foundSuitableStage = true
+
+		// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
+		stageContentSig = stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 	} else {
-		if stageDesc, err := storageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
-			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
-		} else if stageDesc != nil {
-			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
-			i.Image.SetStageDescription(stageDesc)
-			stg.SetStageImage(i)
-			foundSuitableStage = true
+		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+		if err != nil {
+			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 		}
 	}
 
-	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
-	if err != nil {
-		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
-	}
 	stg.SetContentDigest(stageContentSig)
-
 	logboek.Context(ctx).Info().LogF("Stage %s content digest: %s\n", stg.LogDetailedName(), stageContentSig)
 
 	return foundSuitableStage, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, nil
@@ -1137,6 +1161,9 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			i.Image.SetStageDescription(stageDesc)
 			stg.SetStageImage(i)
 
+			// The stage digest is equal but stage content digest might be different.
+			stg.SetContentDigest(stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel])
+
 			return nil
 		}
 
@@ -1207,7 +1234,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 	var checksumArgs []string
 	var checksumArgsNames []string
 
-	// linux/amd64 not affects digest for compatibility with currently built stages
+	// TODO: linux/amd64 not affects digest for compatibility with currently built stages.
 	if opts.TargetPlatform != "" && opts.TargetPlatform != "linux/amd64" {
 		checksumArgs = append(checksumArgs, opts.TargetPlatform)
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
@@ -1241,7 +1268,6 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		}
 	}
 
-	// TODO(staged-dockerfile): this is legacy digest part used for StagedDockerfileV1
 	if opts.BaseImage != "" {
 		checksumArgs = append(checksumArgs, opts.BaseImage)
 		checksumArgsNames = append(checksumArgsNames, "BaseImage")
@@ -1291,9 +1317,7 @@ func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *image
 - auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
 			logboek.Context(ctx).Warn().LogLn()
 
-			logboek.Context(ctx).Warn().LogLn(`Stage digest dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
-
-To quickly find the problem compare current and previous rendered werf configurations.
+			logboek.Context(ctx).Warn().LogLn(`To quickly find the problem compare current and previous rendered werf configurations.
 Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
 E.g.:
 

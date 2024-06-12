@@ -9,7 +9,7 @@ Helm Release will be purged and optionally Kubernetes Namespace.
 
 Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
-Read more info about Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/environments.html]({{ "/usage/deploy/environments.html" | true_relative_url }})
+
 
 {{ header }} Syntax
 
@@ -69,6 +69,8 @@ werf dismiss [options]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -104,7 +106,7 @@ werf dismiss [options]
       --final-repo-container-registry=''
             Choose final-repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
       --final-repo-docker-hub-password=''
@@ -121,16 +123,6 @@ werf dismiss [options]
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=''
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --final-repo-selectel-account=''
-            final-repo Selectel account (default $WERF_FINAL_REPO_SELECTEL_ACCOUNT)
-      --final-repo-selectel-password=''
-            final-repo Selectel password (default $WERF_FINAL_REPO_SELECTEL_PASSWORD)
-      --final-repo-selectel-username=''
-            final-repo Selectel username (default $WERF_FINAL_REPO_SELECTEL_USERNAME)
-      --final-repo-selectel-vpc=''
-            final-repo Selectel VPC (default $WERF_FINAL_REPO_SELECTEL_VPC)
-      --final-repo-selectel-vpc-id=''
-            final-repo Selectel VPC ID (default $WERF_FINAL_REPO_SELECTEL_VPC_ID)
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
@@ -182,9 +174,7 @@ werf dismiss [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
@@ -201,7 +191,7 @@ werf dismiss [options]
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay, selectel.
+            github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -218,16 +208,6 @@ werf dismiss [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --repo-selectel-account=''
-            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
-      --repo-selectel-password=''
-            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
-      --repo-selectel-username=''
-            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
-      --repo-selectel-vpc=''
-            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
-      --repo-selectel-vpc-id=''
-            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.

@@ -8,16 +8,17 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const (
-	LocalStorageAddress              = ":local"
-	DefaultKubernetesStorageAddress  = "kubernetes://werf-synchronization"
-	DefaultHttpSynchronizationServer = "https://synchronization.werf.io"
-	NamelessImageRecordTag           = "__nameless__"
+	LocalStorageAddress             = ":local"
+	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
+	NamelessImageRecordTag          = "__nameless__"
 )
+
+var DefaultHttpSynchronizationServer = "https://synchronization.werf.io"
 
 var ErrBrokenImage = errors.New("broken image")
 

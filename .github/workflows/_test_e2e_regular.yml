@@ -16,7 +16,7 @@ on:
         default: 1
         type: string
       k8sMinor:
-        default: 25
+        default: 29
         type: string
       coverage:
         default: false
@@ -63,7 +63,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Task
-        uses: arduino/setup-task@v1
+        uses: arduino/setup-task@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 

@@ -11,9 +11,9 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/resrcchangcalc"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/cmd/werf/root"
-	"github.com/werf/werf/pkg/process_exterminator"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/cmd/werf/root"
+	"github.com/werf/werf/v2/pkg/process_exterminator"
 )
 
 func main() {
@@ -37,9 +37,10 @@ func main() {
 
 	rootCmd, err := root.ConstructRootCmd(ctx)
 	if err != nil {
-		common.ShutdownTelemetry(ctx, 1)
 		common.TerminateWithError(err.Error(), 1)
 	}
+
+	root.SetupTelemetryInit(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {

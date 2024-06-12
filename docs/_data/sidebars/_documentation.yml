@@ -2,8 +2,8 @@
 entries:
   en:
     f:
-      - title: Install and run
-        url: /index.html
+      - title: Getting started
+        external_url: https://werf.io/getting_started/
 
       - title: Usage
         f:
@@ -72,6 +72,9 @@ entries:
               - title: Deployment scenarios
                 url: /usage/deploy/deployment_scenarios.html
 
+              - title: Planning
+                url: /usage/deploy/planning.html
+
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
 
@@ -122,8 +125,8 @@ entries:
           - title: Cheat sheet
             url: /resources/cheat_sheet.html
 
-          - title: How to migrate from v1.1 to v1.2
-            url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
+          - title: Migration from v1.2 to v2.0
+            url: /resources/migration_from_v1_2_to_v2_0.html
 
           - title: Comparison with other tools
             url: /resources/comparison.html
@@ -133,8 +136,8 @@ entries:
 
   ru:
     f:
-      - title: Установка и запуск
-        url: /index.html
+      - title: Быстрый старт
+        external_url: https://ru.werf.io/getting_started/
 
       - title: Использование
         f:
@@ -200,6 +203,9 @@ entries:
               - title: Порядок развертывания
                 url: /usage/deploy/deployment_order.html
 
+              - title: Планирование
+                url: /usage/deploy/planning.html
+
               - title: Сценарии развертывания
                 url: /usage/deploy/deployment_scenarios.html
 
@@ -253,8 +259,8 @@ entries:
           - title: Шпаргалка
             url: /resources/cheat_sheet.html
 
-          - title: Как мигрировать с v1.1 на v1.2
-            url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
+          - title: Миграция с v1.2 на v2.0
+            url: /resources/migration_from_v1_2_to_v2_0.html
 
           - title: Сравнение с другими решениями
             url: /resources/comparison.html

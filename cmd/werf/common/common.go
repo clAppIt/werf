@@ -15,19 +15,21 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
@@ -108,7 +110,7 @@ func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LooseGiterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/documentation/usage/project_configuration/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
+	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions")
 }
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
@@ -148,68 +150,7 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, `Use only specific ssh key(s).
 Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
-}
-
-func SetupDeprecatedReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeprecatedReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "DEPRECATED: use --save-build-report with optional --build-report-path.\nReport save path ($WERF_REPORT_PATH by default)")
-}
-
-func SetupDeprecatedReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeprecatedReportFormat = new(string)
-
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportFormat, "report-format", "", os.Getenv("WERF_REPORT_FORMAT"), fmt.Sprintf(`DEPRECATED: use --save-build-report with optional --build-report-path.
-Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default) %[1]s:
-	{
-	  "Images": {
-		"<WERF_IMAGE_NAME>": {
-			"WerfImageName": "<WERF_IMAGE_NAME>",
-			"DockerRepo": "<REPO>",
-			"DockerTag": "<TAG>"
-			"DockerImageName": "<REPO>:<TAG>",
-			"DockerImageID": "<SHA256>",
-			"DockerImageDigest": "<SHA256>",
-		},
-		...
-	  }
-	}
-%[2]s:
-	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-	...
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
-}
-
-func GetDeprecatedReportPath(ctx context.Context, cmdData *CmdData) string {
-	if cmdData.DeprecatedReportPath == nil {
-		return ""
-	}
-
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-path ($WERF_REPORT_PATH)\n")
-
-	return *cmdData.DeprecatedReportPath
-}
-
-func GetDeprecatedReportFormat(ctx context.Context, cmdData *CmdData) (build.ReportFormat, error) {
-	if cmdData.DeprecatedReportFormat == nil {
-		return build.ReportJSON, nil
-	}
-
-	var reportFormat build.ReportFormat
-	switch reportFormat = build.ReportFormat(*cmdData.DeprecatedReportFormat); reportFormat {
-	case build.ReportJSON, build.ReportEnvFile:
-	case "":
-		defaultFormat := build.ReportJSON
-		reportFormat = defaultFormat
-	default:
-		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", reportFormat, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
-	}
-
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-format ($WERF_REPORT_FORMAT)\n")
-
-	return reportFormat, nil
+Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}`)
 }
 
 func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
@@ -398,14 +339,30 @@ func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.Environment, "env", "", os.Getenv("WERF_ENV"), "Use specified environment (default $WERF_ENV)")
 }
 
-func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
+func SetupRelease(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.Release = new(string)
-	cmd.Flags().StringVarP(cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)")
+
+	var usage string
+	if projectConfigParsed {
+		usage = "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)"
+	} else {
+		usage = "Use specified Helm release name (default $WERF_RELEASE)"
+	}
+
+	cmd.Flags().StringVarP(cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), usage)
 }
 
-func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
+func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.Namespace = new(string)
-	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)")
+
+	var usage string
+	if projectConfigParsed {
+		usage = "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)"
+	} else {
+		usage = "Use specified Kubernetes namespace (default $WERF_NAMESPACE)"
+	}
+
+	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), usage)
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
@@ -601,9 +558,17 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 	}
 }
 
-func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
+func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.InsecureHelmDependencies = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
+
+	var usage string
+	if projectConfigParsed {
+		usage = "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)"
+	} else {
+		usage = "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)"
+	}
+
+	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), usage)
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -613,6 +578,11 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 
 	cmdData.InsecureRegistry = new(bool)
 	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
+}
+
+func SetupContainerRegistryMirror(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ContainerRegistryMirror = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -831,10 +801,17 @@ func SetupSetString(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
 }
 
-func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
+func SetupValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.Values = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple).
-Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
+
+	var usage string
+	if projectConfigParsed {
+		usage = `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`
+	} else {
+		usage = `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml, $WERF_VALUES_2=values_2.yaml)`
+	}
+
+	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, usage)
 }
 
 func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
@@ -843,10 +820,17 @@ func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
 }
 
-func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
+func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.SecretValues = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple).
-Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+
+	var usage string
+	if projectConfigParsed {
+		usage = `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`
+	} else {
+		usage = `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml, $WERF_SECRET_VALUES_DB=secret_values_db.yaml)`
+	}
+
+	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, usage)
 }
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
@@ -894,14 +878,6 @@ There are the following formats to use:
 
 IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless image specified with ~.
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
-}
-
-// SetupSkipBuild
-// Deprecated. See [SetupRequireBuiltImages].
-func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SkipBuild = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "DEPRECATED: use --require-built-images.")
-	_ = cmd.Flags().MarkHidden("skip-build")
 }
 
 // SetupRequireBuiltImages adds --require-built-images flag.
@@ -1250,6 +1226,51 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
 }
 
+func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
+	mirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
+
+	if len(mirrors) > 0 {
+		buildahMode, _, err := GetBuildahMode()
+		if err != nil {
+			return nil, fmt.Errorf("get buildah mode: %w", err)
+		}
+
+		if *buildahMode == buildah.ModeDisabled {
+			global_warnings.GlobalWarningLn(ctx, "in Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#using-mirrors-for-dockerio")
+			return nil, nil
+		}
+	}
+
+	// init registry mirrors if docker cli initialized in context
+	if docker.IsEnabled() && docker.IsContext(ctx) {
+		info, err := docker.Info(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get docker system info: %w", err)
+		}
+
+		if info.RegistryConfig == nil {
+			return nil, nil
+		}
+
+		return info.RegistryConfig.Mirrors, nil
+	}
+
+	var result []string
+	for _, mirror := range mirrors {
+		if strings.HasPrefix(mirror, "http://") {
+			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
+		}
+
+		if !strings.HasPrefix(mirror, "http://") && !strings.HasPrefix(mirror, "https://") {
+			mirror = "https://" + mirror
+		}
+
+		result = append(result, mirror)
+	}
+
+	return result, nil
+}
+
 func getAddCustomTag(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
 }
@@ -1294,11 +1315,7 @@ func GetRequireBuiltImages(ctx context.Context, cmdData *CmdData) bool {
 	if cmdData.RequireBuiltImages != nil && *cmdData.RequireBuiltImages {
 		return true
 	}
-	// Support for deprecated option.
-	if cmdData.SkipBuild != nil && *cmdData.SkipBuild {
-		logboek.Context(ctx).Warn().LogF("DEPRECATED: use --require-built-images ($WERF_REQUIRE_BUILT_IMAGES) instead of --skip-build\n")
-		return true
-	}
+
 	return false
 }
 
@@ -1435,8 +1452,8 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 	return nil
 }
 
-func DockerRegistryInit(ctx context.Context, cmdData *CmdData) error {
-	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string) error {
+	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {
