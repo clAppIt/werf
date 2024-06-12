@@ -26,18 +26,14 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
 for group in "1.2"; do
 
   for distro in "ubuntu"; do
-    werf export --tag "$DEST_SUBREPO/werf:$group-$distro" "$group-stable-$distro"
+    werf export --tag "$DEST_SUBREPO/werf1:$group-$distro" "$group-stable-$distro"
   done
 
   for channel in "stable"; do
-    werf export --tag "$DEST_SUBREPO/werf:$group-$channel" "$group-$channel-alpine"
+    werf export --tag "$DEST_SUBREPO/werf1:$group-$channel" "$group-$channel-alpine"
 
     for distro in "ubuntu"; do
-      werf export --tag "$DEST_SUBREPO/werf:$group-$channel-$distro" "$group-$channel-$distro"
-    done
-
-    for distro in "ubuntu"; do
-      werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:$group-$channel-$distro" "argocd-cmp-sidecar-$group-$channel-$distro"
+      werf export --tag "$DEST_SUBREPO/werf1:$group-$channel-$distro" "$group-$channel-$distro"
     done
   done
 done
