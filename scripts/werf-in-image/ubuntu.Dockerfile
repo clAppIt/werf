@@ -36,11 +36,6 @@ USER root
 RUN mkdir -p /home/build/.local/share/containers
 VOLUME /home/build/.local/share/containers
 
-
-RUN useradd -m myuser && echo "myuser:password" | chpasswd && adduser myuser sudo
-# Set user to 'myuser'
-USER myuser
-
 # Fix fatal: detected dubious ownership in repository.
 RUN git config --global --add safe.directory '*'
 
