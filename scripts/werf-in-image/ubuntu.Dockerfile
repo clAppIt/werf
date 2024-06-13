@@ -31,12 +31,15 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN useradd -m myuser && echo "myuser:password" | chpasswd && adduser myuser sudo
-# Set user to 'myuser'
-USER myuser
+USER root
 
 RUN mkdir -p /home/build/.local/share/containers
 VOLUME /home/build/.local/share/containers
+
+
+RUN useradd -m myuser && echo "myuser:password" | chpasswd && adduser myuser sudo
+# Set user to 'myuser'
+USER myuser
 
 # Fix fatal: detected dubious ownership in repository.
 RUN git config --global --add safe.directory '*'
